@@ -1,7 +1,7 @@
 # アジェンダ
 
 1. 高機能REPL `pry`の紹介
-1. Rubyでよく使われるイディオムたち
+1. Rubyでよく使われるイディオムとかメソッドとか
 
 # 高機能REPL `pry`の紹介
 
@@ -106,6 +106,130 @@ http://morizyun.github.io/blog/pry-command-rails-ruby/
 この辺を参照してください。
 
 
+# Rubyでよく使われるイディオムとかメソッドとか
 
+いわゆるRubyベストプラクティス的な感じで紹介していきます。
 
+* %wで配列を生成
 
+perlでもqwとかやりますね。
+
+```ruby
+#before
+array = ['apple', 'lemon', 'banana']
+```
+
+```ruby
+#after
+array = %w(apple lemon banana)
+#=> ['apple', 'lemon', 'banana']
+```
+
+ちなみに%iだとシンボルが作れます (version 2.0以上)
+
+```ruby
+array = %i(apple lemon banana)
+#=> [:apple, :lemon, :banana]
+```
+
+* 後置if
+
+perlでもやりますね。
+
+```ruby
+#before
+
+if user.exist?
+   puts user.name
+end
+```
+
+```ruby
+#after
+
+puts usrer.name if user.exist?
+```
+
+* メソッドの戻り値を返したいときにはreturnは使わない
+
+これもperlと一緒ですね
+
+```ruby
+#before
+
+def circle(r)
+    return r*r*3.14
+end
+```
+
+```ruby
+#after
+
+def circle(r)
+    r*r*3.14
+end
+```
+
+* Object#tapを使って値の操作をしつつ最終結果の値を得る
+
+何言ってるかわからないと思うのでコードを見てください
+**Object#tapはtapに渡したブロックの評価結果を捨てるメソッドです。**
+
+```ruby
+#tap example
+"murakami".upcase.tap{|n| p n} #=> "MURAKAMI"
+          .downcase #=> "murakami"
+```
+
+```ruby
+#before
+
+def reset_name
+    name = @name
+    @name = nil
+    name
+end
+```
+
+```ruby
+#after
+
+def reset_name
+    @name.tap { @name = nil }
+end
+```
+
+* クラスメソッドの定義には class << selfを使う
+
+大量にクラスメソッドを定義するときなどにはいちいちself.を書かなくて良いです
+class << self 自体がなんなのかを知りたければ「特異クラス」というキーワードで調べてください
+
+```ruby
+#before 
+
+class Greeting
+      def self.hello
+          puts "hello"
+      end
+
+      def self.goodbye
+          puts "goodbye"
+      end
+end
+```
+
+```ruby
+#after
+
+class Greeting
+      class << self
+            def hello
+                puts "hello"
+            end
+            
+            def goodbye
+                puts "goodbye"
+            end
+      end
+end
+```
