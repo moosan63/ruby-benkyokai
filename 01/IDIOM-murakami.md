@@ -103,14 +103,14 @@ riをpry上で参照できたり、pry上のlsで現在のフレーム上で有�
 
 http://morizyun.github.io/blog/pry-command-rails-ruby/
 
-この辺を参照してください。
+  この辺を参照してください。
 
 
 # Rubyでよく使われるイディオムとかメソッドとか
 
 いわゆるRubyベストプラクティス的な感じで紹介していきます。
 
-* %wで配列を生成
+## %wで配列を生成
 
 perlでもqwとかやりますね。
 
@@ -132,7 +132,41 @@ array = %i(apple lemon banana)
 #=> [:apple, :lemon, :banana]
 ```
 
-* 後置if
+## 文字列の中で変数を展開するときには`#{}`を使う
+
+perlならシジルがあるので変数をそのままいれれば大丈夫ですがrubyなら`#{}`を使います
+シングルクォートだとそのまま出力されてしまいます
+
+```ruby
+#after
+
+greet = "good morning"
+p greet+", sir!" #=> "good morning, sir!"
+```
+
+
+```ruby
+#after
+
+greet = "good morning"
+p "#{greet}, sir!" #=> "good morning, sir!"
+```
+
+## 大きな数字を宣言するときは"_"を入れて見やすくする
+
+```ruby
+#before
+
+MAX = 999999999
+```
+
+```ruby
+#after
+
+MAX = 999_999_999
+```
+
+## 後置if
 
 perlでもやりますね。
 
@@ -140,7 +174,7 @@ perlでもやりますね。
 #before
 
 if user.exist?
-   puts user.name
+  puts user.name
 end
 ```
 
@@ -150,7 +184,7 @@ end
 puts usrer.name if user.exist?
 ```
 
-* メソッドの戻り値を返したいときにはreturnは使わない
+## メソッドの戻り値を返したいときにはreturnは使わない
 
 これもperlと一緒ですね
 
@@ -158,7 +192,7 @@ puts usrer.name if user.exist?
 #before
 
 def circle(r)
-    return r*r*3.14
+  return r*r*3.14
 end
 ```
 
@@ -166,13 +200,14 @@ end
 #after
 
 def circle(r)
-    r*r*3.14
+  r*r*3.14
 end
 ```
 
-* Object#tapを使って値の操作をしつつ最終結果の値を得る
+## Object#tapを使って値の操作をしつつ最終結果の値を得る
 
 何言ってるかわからないと思うのでコードを見てください
+
 **Object#tapはtapに渡したブロックの評価結果を捨てるメソッドです。**
 
 ```ruby
@@ -185,9 +220,9 @@ end
 #before
 
 def reset_name
-    name = @name
-    @name = nil
-    name
+  name = @name
+  @name = nil
+  name
 end
 ```
 
@@ -195,11 +230,11 @@ end
 #after
 
 def reset_name
-    @name.tap { @name = nil }
+  @name.tap { @name = nil }
 end
 ```
 
-* クラスメソッドの定義には class << selfを使う
+## クラスメソッドの定義には class << selfを使う
 
 大量にクラスメソッドを定義するときなどにはいちいちself.を書かなくて良いです
 class << self 自体がなんなのかを知りたければ「特異クラス」というキーワードで調べてください
@@ -208,13 +243,13 @@ class << self 自体がなんなのかを知りたければ「特異クラス」
 #before 
 
 class Greeting
-      def self.hello
-          puts "hello"
-      end
+  def self.hello
+    puts "hello"
+  end
 
-      def self.goodbye
-          puts "goodbye"
-      end
+  def self.goodbye
+    puts "goodbye"
+  end
 end
 ```
 
@@ -222,14 +257,114 @@ end
 #after
 
 class Greeting
-      class << self
-            def hello
-                puts "hello"
-            end
-            
-            def goodbye
-                puts "goodbye"
-            end
-      end
+  class << self
+    def hello
+      puts "hello"
+    end
+    
+    def goodbye
+      puts "goodbye"
+    end
+  end
 end
+```
+
+## 遅延初期化
+
+nilだったら初期化するのイディオム`||=`を使います
+
+```ruby
+#before
+
+def check_race
+  @race = "japanese" if @race.nil?
+  @race
+end
+```
+
+```ruby
+#after
+
+def check_race
+  @race ||= "japanese"
+end
+```
+
+## mapやselectの処理を&を使って簡略化する
+
+なんでこんなことが出来るかは
+http://d.hatena.ne.jp/yoshidaa/20110515/1305431262
+ここがわかりやすいかも
+
+```ruby
+#befoer
+
+["aaa", "bbbb", "cc"].map{ |word| word.length }
+
+```
+
+```ruby
+#after
+
+["aaa", "bbbb", "cc"].map(&:length)
+```
+
+#配列の最初と最後へのアクセスはfirst, lastメソッドで
+
+ちなみに[-1]も使えます。
+
+```ruby
+array = [1,2,3]
+array[0..-1] #=> [1,2,3] 最初から最後までを取得
+```
+
+```ruby
+#before
+
+array = [1,2,3]
+array[0] #=> 1
+array[-1] #=> 3
+```
+
+```ruby
+#after
+
+array = [1,2,3]
+array.first #=> 1
+array.last #=> 3
+```
+
+## each_with_indexを使ってeachでカウンタを使う
+
+```ruby
+#before
+
+i = 0
+(1..3).each do |n|
+ puts "#{i} : #{n}"
+ i++
+end
+```
+
+```ruby
+(1..3).each_with_index do |n, i|
+  puts "#{i} : #{n}"
+end
+```
+
+## sampleを使って無作為な値を返す
+Array#sampleは配列の要素を無作為に取り出して返すメソッドです
+
+```ruby
+#before
+
+array = [1,2,3,4,5]
+array[rand(array.size)]
+```
+
+```ruby
+#after
+
+array = [1,2,3,4,5]
+array.sample
 ```
